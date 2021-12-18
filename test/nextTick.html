@@ -1,0 +1,193 @@
+<!-- <!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vue源码剖析</title>
+    <script src="../dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="demo">
+        <h1>异步更新</h1>
+        <p id="p1">{{foo}}</p>
+    </div>
+    <script>
+        // 创建实例
+        const app = new Vue({
+            el: '#demo',
+            data: { 
+                foo: 'ready~~',
+                bar: 'lalala'
+            },
+            mounted() {
+                this.foo = Math.random()
+                console.log('1:' + this.foo);
+                this.foo = Math.random()
+                console.log('2:' + this.foo);
+
+                this.foo = Math.random()
+                console.log('3:' + this.foo);
+                // 异步行为，此时内容没变
+                console.log('p1.innerHTML:' + p1.innerHTML) // ready~~
+                this.$nextTick(() => {
+                    // 这里才是最新的值
+                    console.log('p1.innerHTML:' + p1.innerHTML) // 3
+                })
+            }
+        });
+    </script>
+</body>
+
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vue源码剖析</title>
+    <script src="../dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="demo">
+        <h1>异步更新</h1>
+        <p id="p1">{{foo}}</p>
+    </div>
+    <script>
+        // 创建实例
+        const app = new Vue({
+            el: '#demo',
+            data: { 
+                foo: 'ready~~',
+                bar: 'lalala'
+            },
+            mounted() {
+                this.foo = Math.random()
+                console.log('1:' + this.foo);
+                this.foo = Math.random()
+                console.log('2:' + this.foo);
+                this.$nextTick(() => {
+                    // 这里才是最新的值
+                    console.log('p1.innerHTML:' + p1.innerHTML) // 3 ...
+                })
+                this.foo = Math.random()
+                console.log('3:' + this.foo);
+                // 异步行为，此时内容没变
+                console.log('p1.innerHTML:' + p1.innerHTML) // ready
+            }
+        });
+    </script>
+</body>
+
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vue源码剖析</title>
+    <script src="../dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="demo">
+        <h1>异步更新</h1>
+        <p id="p1">{{foo}}</p>
+    </div>
+    <script>
+        // 创建实例
+        const app = new Vue({
+            el: '#demo',
+            data: { 
+                foo: 'ready~~',
+                bar: 'lalala'
+              },
+              mounted() {
+                // callbacks: [cb1, flushSchedulerQueue]
+                /* 
+                  cb1: () => {
+                      // 这里才是最新的值
+                      console.log('p1.innerHTML:' + p1.innerHTML)
+                  }
+                
+                */
+                // 将回调函数放入callback数组中
+                this.$nextTick(() => {
+                    // 这里才是最新的值
+                    console.log('p1.innerHTML:' + p1.innerHTML) // ready~~
+                })
+                
+                this.foo = Math.random() // 根据数据更新原理，foo改变的时候，会先执行notify--update--queueWatcher，让watcher入队，然后才执行nextTick(flushSchedulerQueue)，让flushScheduleQueue入callbaks数组中
+                console.log('1:' + this.foo);
+                this.foo = Math.random()
+                console.log('2:' + this.foo);
+
+                this.foo = Math.random()
+                console.log('3:' + this.foo);
+                // 异步行为，此时内容没变
+                console.log('p1.innerHTML:' + p1.innerHTML) // ready~~
+            }
+        });
+    </script>
+</body>
+
+</html> -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vue源码剖析</title>
+    <script src="../dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="demo">
+        <h1>异步更新</h1>
+        <p id="p1">{{foo}}</p>
+    </div>
+    <script>
+        // 创建实例
+        const app = new Vue({
+            el: '#demo',
+            data: { 
+                foo: 'ready~~',
+                bar: 'lalala'
+            },
+            mounted() {
+                this.foo = Math.random()
+                console.log('1:' + this.foo);
+                this.foo = Math.random()
+                console.log('2:' + this.foo);
+
+                this.foo = Math.random()
+                console.log('3:' + this.foo);
+                // 异步行为，此时内容没变
+                console.log('p1.innerHTML:' + p1.innerHTML)
+
+
+                // callback: [flushSchedulerQueue]
+                // microTasksQueue: [flushCallbacks, cb]
+                /* 
+                cb:
+                  () => {
+                    console.log('promise:' + p1.innerHTML)
+                  }
+                */
+                // setter触发--queueWatcher(this) -- nextTick(flushScheduleQueue) -- timerFunc() --p.then(fulshCallbacks) 会先触发timerFunc 所以会先往microTasksQueue中推入flushCallbacks, 然后才是cb
+                // 在清空微任务队列的时候 会先执行flushCallbacks
+                Promise.resolve().then(() => {
+                  console.log('promise:' + p1.innerHTML) // 后执行
+                })
+               
+                this.$nextTick(() => {
+                  // 这里才是最新的值
+                  console.log('p1.innerHTML:' + p1.innerHTML) // 先执行
+                })
+            }
+        });
+    </script>
+</body>
+
+</html>
